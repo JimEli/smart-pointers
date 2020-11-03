@@ -14,21 +14,21 @@
     // The extra && aren't necessary, but make it more robust in case it's used with a non-reference.
     #define FORWARD(...) static_cast<decltype(__VA_ARGS__)&&>(__VA_ARGS__)
 
-    // Type erasure for run-time polymorphic behavior of deleter.
-    class deleter_base {
-        public:
-        virtual ~deleter_base() = default;
-        virtual void operator()(void*) = 0;
-    };
-
-    template <typename T>
-    class deleter : public deleter_base {
-        public:
-        void operator()(void* p) override { delete static_cast<T*>(p); }
-    };
-
     template<typename T>
     class shared_ptr {
+        // Type erasure for run-time polymorphic behavior of deleter.
+        class deleter_base {
+            public:
+            virtual ~deleter_base() = default;
+            virtual void operator()(void*) = 0;
+        };
+
+        template <typename T>
+        class deleter : public deleter_base {
+            public:
+            void operator()(void* p) override { delete static_cast<T*>(p); }
+        };
+
         T* _ptr{ nullptr };            // contained pointer
         std::atomic<long>* _ref_count; // reference counter
         deleter_base* _deleter;        // deleter
